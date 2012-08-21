@@ -47,25 +47,45 @@
 	
 	[zoomPercentageBox selectItemAtIndex:index];
 	[zoomStepper setIntValue:index];
-	[[canvasController view] setZoomPercentage:[zoomPercentageBox intValue]];
+	[[canvasController view] setZoomPercentage:[zoomPercentageBox floatValue]];
 	[canvasController updateMousePosition:[[self window] mouseLocationOutsideOfEventStream]];
 }
 
-- (void)zoomToPercentage:(NSNumber *)percentage
+- (void)zoomToPercentage:(NSNumber *)rawPercent addZoomLevel:(BOOL)addToValues
 {
-	if( percentage == nil 
-		|| [percentage isEqual:[NSNumber numberWithInt:0]] 
-		|| [[[percentage description] lowercaseString] isEqualToString:PXInfinityDescription] 
-		|| [[[percentage description] lowercaseString] isEqualToString:PXNanDescription]) 
+	if( rawPercent == nil 
+		|| [[[rawPercent description] lowercaseString] isEqualToString:PXInfinityDescription] 
+		|| [[[rawPercent description] lowercaseString] isEqualToString:PXNanDescription]) 
 	{ 
 		[self zoomToPercentage:[NSNumber numberWithFloat:100]]; 
 		return;
 	}
-	if([percentage intValue] > 10000)
+	NSNumber *percentage = [NSNumber numberWithFloat:MIN(MAX([rawPercent floatValue], 1), 10000)];
+
+	if ( ! addToValues )
 	{
-		[self zoomToIndex:0];
+		int oldPercentInt = (int)[[canvasController view] zoomPercentage];
+		int index = 0;
+
+		// If we pass a zoom level, select it in the combo box.
+		for ( id zoomLevel in [zoomPercentageBox objectValues] )
+		{
+			int zoomLevelInt = [zoomLevel intValue];
+			if ( (oldPercentInt <= zoomLevelInt && zoomLevelInt <= [percentage intValue])
+				|| (zoomLevelInt <= oldPercentInt && [percentage intValue] <= zoomLevelInt))
+			{
+				[zoomPercentageBox selectItemAtIndex:index];
+				break;
+			}
+			index++;
+		}
+
+		[zoomPercentageBox setStringValue:[percentage stringValue]];
+		[[canvasController view] setZoomPercentage:[percentage floatValue]];
+		[canvasController updateMousePosition:[[self window] mouseLocationOutsideOfEventStream]];
 		return;
 	}
+
 	// Kind of a HACK, could change if the description changes to display something other than inf or nan on such numbers.
 	//Probably not an issue, but I'll mark it so it's easy to find if it breaks later.
 	
@@ -80,6 +100,11 @@
 	
 	[zoomPercentageBox selectItemWithObjectValue:percentage];
 	[self zoomToIndex:[zoomPercentageBox indexOfSelectedItem]];
+}
+
+- (void)zoomToPercentage:(NSNumber *)percentage
+{
+    [self zoomToPercentage:percentage addZoomLevel:YES];
 }
 
 - (void)zoomToFit
@@ -113,12 +138,12 @@
 
 - (IBAction)zoomIn: (id) sender
 {
-	[self zoomToIndex:[zoomStepper intValue]-1];
+	[self zoomToIndex:[self zoomInNextIndex]];
 }
 
 - (IBAction)zoomOut: (id) sender
 {
-	[self zoomToIndex:[zoomStepper intValue]+1];
+	[self zoomToIndex:[self zoomOutNextIndex]];
 }
 
 - (IBAction)zoomStandard: (id) sender
@@ -139,7 +164,53 @@
 		[zoomStepper setIntValue: (int)[zoomPercentageBox numberOfItems]-1]; 
 		return; 
 	}
-	[self zoomToIndex:[zoomStepper intValue]];
+	NSInteger diff = [zoomStepper intValue] - [zoomPercentageBox indexOfSelectedItem];
+	if (diff < 0)
+	{
+		[self zoomToIndex:[self zoomInNextIndex]];
+	}
+	else if (diff > 0)
+	{
+		[self zoomToIndex:[self zoomOutNextIndex]];
+	}
+}
+
+- (void)magnifyWithEvent:(NSEvent *)event
+{
+	NSNumber *percent = [NSNumber numberWithFloat:[zoomPercentageBox floatValue] * (1.0f + [event magnification])];
+	[self zoomToPercentage:percent addZoomLevel:NO];
+}
+
+- (NSInteger)zoomInNextIndex
+{
+	float percent = [zoomPercentageBox floatValue];
+	NSInteger index = [zoomPercentageBox numberOfItems];
+
+	for ( id zoomLevel in [[zoomPercentageBox objectValues] reverseObjectEnumerator] )
+	{
+		index--;
+		if ( [zoomLevel floatValue] > percent )
+		{
+			return index;
+		}
+	}
+	return -1;
+}
+
+- (NSInteger)zoomOutNextIndex
+{
+	float percent = [zoomPercentageBox floatValue];
+	NSInteger index = -1;
+
+	for ( id zoomLevel in [zoomPercentageBox objectValues] )
+	{
+		index++;
+		if ( [zoomLevel floatValue] < percent )
+		{
+			return index;
+		}
+	}
+	return -1;
 }
 
 

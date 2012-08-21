@@ -215,7 +215,7 @@ void PXDebugRect(NSRect r, float alpha)
 - (void)setZoomPercentage:(float)percent
 {
 	NSRect rect = [self visibleRect];
-	centeredPoint = [self convertFromViewToCanvasPoint:NSMakePoint(NSMinX(rect) + NSWidth(rect)/2, NSMinY(rect) + NSHeight(rect)/2)];
+	centeredPoint = [self convertFromViewToPartialCanvasPoint:NSMakePoint(NSMinX(rect) + NSWidth(rect)/2, NSMinY(rect) + NSHeight(rect)/2)];
 	zoomPercentage = percent;
 	cachedMarqueePath = nil;
 	[self sizeToCanvas];

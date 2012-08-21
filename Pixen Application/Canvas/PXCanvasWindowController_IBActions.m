@@ -204,11 +204,13 @@
 		return [[self canvas] hasSelection] && [[[PXToolPaletteController sharedToolPaletteController] currentTool] supportsPatterns];
 	else if ([anItem action] == @selector(zoomOut:))
 	{
-		return ([zoomPercentageBox indexOfSelectedItem] < [zoomPercentageBox numberOfItems]-1);
+		id zoomLevel = [zoomPercentageBox itemObjectValueAtIndex:[zoomPercentageBox numberOfItems]-1];
+		return ([zoomLevel floatValue] < [zoomPercentageBox floatValue]);
 	}
 	else if ([anItem action] == @selector(zoomIn:))
 	{
-		return ([zoomPercentageBox indexOfSelectedItem] > 0);
+		id zoomLevel = [zoomPercentageBox itemObjectValueAtIndex:0];
+		return ([zoomLevel floatValue] > [zoomPercentageBox floatValue]);
 	}
 	else if ([anItem action] == @selector(increaseOpacity:))
 	{

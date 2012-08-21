@@ -15,6 +15,7 @@
 - (IBAction)zoomToFit:sender;
 - (void)zoomToIndex:(float)index;
 - (void)zoomToPercentage:(NSNumber *)percentage;
+- (void)zoomToPercentage:(NSNumber *)percentage addZoomLevel:(BOOL)addToValues;
 - (void)zoomToFit;
 - (void)canvasController:(PXCanvasController *)controller zoomInOnCanvasPoint:(NSPoint)point;
 - (void)canvasController:(PXCanvasController *)controller zoomOutOnCanvasPoint:(NSPoint)point;
